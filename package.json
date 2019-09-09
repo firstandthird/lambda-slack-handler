@@ -1,0 +1,24 @@
+{
+  "name": "lambda-slack-handler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/firstandthird/lambda-slack-handler.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/firstandthird/lambda-slack-handler/issues"
+  },
+  "homepage": "https://github.com/firstandthird/lambda-slack-handler#readme",
+  "dependencies": {
+    "p-map": "^3.0.0",
+    "post2slack": "^2.0.0"
+  }
+}
