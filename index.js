@@ -2,29 +2,36 @@ const Post2Slack = require('post2slack');
 const zlib = require('zlib');
 const pMap = require('p-map');
 
-module.exports = function(options = {}) {
-  const post = new Post2Slack({
-    username: process.env.SLACK_USERNAME || options.username || 'LambdaNotify',
-    slackHook: process.env.SLACK_HOOK || options.hook,
-    channel: process.env.SLACK_CHANNEL || options.channel
-  });
+let post = null;
 
-  return async function(req) {
-    const payload = Buffer.from(req.awslogs.data, 'base64');
-    const result = zlib.gunzipSync(payload);
+exports.handler = function(req) {
+  if (!post) {
+    post = new Post2Slack({
+      username: process.env.SLACK_USERNAME 'LambdaNotify',
+      slackHook: process.env.SLACK_HOOK,
+      channel: process.env.SLACK_CHANNEL
+    });
+  }
 
-    const eventObj = JSON.parse(result.toString('ascii'));
-    const group = eventObj.logGroup;
-    //console.log('Full Event: ', eventObj);
+  const payload = Buffer.from(req.awslogs.data, 'base64');
+  const result = zlib.gunzipSync(payload);
 
-    if (eventObj.logEvents) {
-      await pMap(eventObj.logEvents, async (e) => {
-        await post.postFormatted([], { group, message: e.message, timestamp: e.timestamp });
-      });
-    }
+  const eventObj = JSON.parse(result.toString('ascii'));
+  const group = eventObj.logGroup;
+  //console.log('Full Event: ', eventObj);
 
-    return {
-      body: 'ok'
-    }
+  if (eventObj.logEvents) {
+    await pMap(eventObj.logEvents, async (e) => {
+      await post.postFormatted([], { group, message: e.message, timestamp: e.timestamp });
+    });
+  }
+
+  return {
+    body: 'ok'
   }
 }
+
+module.exports = function(options = {}) {
+  return exports.handler;
+}
+
