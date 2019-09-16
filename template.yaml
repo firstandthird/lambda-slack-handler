@@ -26,6 +26,9 @@ Parameters:
   SlackChannel:
     Description: Channel to send message to
     Type: String
+  SlackUsername:
+    Description: Name to post as
+    Type: String
 
 Resources:
   LambdaSlackHandler:
@@ -34,6 +37,11 @@ Resources:
       CodeUri: ./
       Handler: index.handler
       Runtime: nodejs10.x
+      Environment:
+        Variables:
+          SLACK_HOOK: !Ref SlackUrl
+          SLACK_CHANNEL: !Ref SlackChannel
+          SLACK_USERNAME: !Ref SlackUsername
 
 
 Outputs:

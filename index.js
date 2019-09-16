@@ -7,7 +7,7 @@ let post = null;
 exports.handler = function(req) {
   if (!post) {
     post = new Post2Slack({
-      username: process.env.SLACK_USERNAME 'LambdaNotify',
+      username: process.env.SLACK_USERNAME || 'LambdaNotify',
       slackHook: process.env.SLACK_HOOK,
       channel: process.env.SLACK_CHANNEL
     });
