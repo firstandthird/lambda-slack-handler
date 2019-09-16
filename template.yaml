@@ -15,7 +15,7 @@ Metadata:
     Labels: [serverless,slack,CloudWatch,logs]
     HomePageUrl: https://github.com/firstandthird/lambda-slack-handler
     # Update the semantic version and run sam publish to publish a new version of your app
-    SemanticVersion: 1.0.0
+    SemanticVersion: 1.0.1
     # best practice is to use git tags for each release and link to the version tag as your source code URL
     SourceCodeUrl: https://github.com/firstandthird/lambda-slack-handler/tree/1.0.0
 
