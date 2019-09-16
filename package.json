@@ -20,5 +20,13 @@
   "dependencies": {
     "p-map": "^3.0.0",
     "post2slack": "^2.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.4.0",
+    "eslint-config-firstandthird": "^4.4.0",
+    "eslint-plugin-import": "^2.18.2"
+  },
+  "eslintConfig": {
+    "extends": "firstandthird"
   }
 }

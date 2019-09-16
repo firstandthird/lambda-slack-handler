@@ -4,7 +4,7 @@ const pMap = require('p-map');
 
 let post = null;
 
-exports.handler = function(req) {
+exports.handler = async function(req) {
   if (!post) {
     post = new Post2Slack({
       username: process.env.SLACK_USERNAME || 'LambdaNotify',
@@ -28,10 +28,10 @@ exports.handler = function(req) {
 
   return {
     body: 'ok'
-  }
-}
+  };
+};
 
 module.exports = function(options = {}) {
   return exports.handler;
-}
+};
 
