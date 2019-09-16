@@ -1,0 +1,17 @@
+#!/bin/bash
+
+CMD=$1
+
+if [[ "$CMD" == "package" ]]; then
+  sam package --s3-bucket lambda-slack-handler --output-template-file packaged.yaml
+  exit 0
+fi
+
+if [[ "$CMD" == "publish" ]]; then
+  sam publish --template packaged.yaml
+  exit 0
+fi
+
+
+
+
