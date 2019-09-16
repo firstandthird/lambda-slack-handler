@@ -31,7 +31,3 @@ exports.handler = async function(req) {
   };
 };
 
-module.exports = function(options = {}) {
-  return exports.handler;
-};
-
