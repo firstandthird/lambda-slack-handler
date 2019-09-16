@@ -17,7 +17,7 @@ Metadata:
     - CloudWatch
     - logs
     HomePageUrl: https://github.com/firstandthird/lambda-slack-handler
-    SemanticVersion: 1.0.0
+    SemanticVersion: 1.0.1
     SourceCodeUrl: https://github.com/firstandthird/lambda-slack-handler/tree/1.0.0
 Parameters:
   SlackUrl:
@@ -26,13 +26,24 @@ Parameters:
   SlackChannel:
     Description: Channel to send message to
     Type: String
+  SlackUsername:
+    Description: Name to post as
+    Type: String
 Resources:
   LambdaSlackHandler:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://lambda-slack-handler/2961201b699649a775bc35ebb54b31ef
+      CodeUri: s3://lambda-slack-handler/7c5aec6fb6fb0a6a2e24adc0c37ae0f4
       Handler: index.handler
       Runtime: nodejs10.x
+      Environment:
+        Variables:
+          SLACK_HOOK:
+            Ref: SlackUrl
+          SLACK_CHANNEL:
+            Ref: SlackChannel
+          SLACK_USERNAME:
+            Ref: SlackUsername
 Outputs:
   LambdaToSlackArn:
     Description: Lambda Slack Function Name ARN
