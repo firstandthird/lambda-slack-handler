@@ -12,16 +12,24 @@ exports.handler = async function(req) {
       channel: process.env.SLACK_CHANNEL
     });
   }
+  const debug = process.env.DEBUG === 'on';
 
-  const payload = Buffer.from(req.awslogs.data, 'base64');
-  const result = zlib.gunzipSync(payload);
+  let event = {};
+  if (req.awslogs) {
+    const payload = Buffer.from(req.awslogs.data, 'base64');
+    const result = zlib.gunzipSync(payload);
 
-  const eventObj = JSON.parse(result.toString('ascii'));
-  const group = eventObj.logGroup;
-  //console.log('Full Event: ', eventObj);
+    event = JSON.parse(result.toString('ascii'));
+  } else {
+    event = req; //used when testing
+  }
+  if (debug) {
+    console.log(JSON.stringify(event)); //eslint-disable-line no-console
+  }
 
-  if (eventObj.logEvents) {
-    await pMap(eventObj.logEvents, async (e) => {
+  const group = event.logGroup;
+  if (event.logEvents) {
+    await pMap(event.logEvents, async (e) => {
       await post.postFormatted([], { group, message: e.message, timestamp: e.timestamp });
     });
   }
