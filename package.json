@@ -18,8 +18,8 @@
   },
   "homepage": "https://github.com/firstandthird/lambda-slack-handler#readme",
   "dependencies": {
-    "p-map": "^3.0.0",
-    "post2slack": "^2.0.0"
+    "@hapi/wreck": "^15.0.2",
+    "p-map": "^3.0.0"
   },
   "devDependencies": {
     "eslint": "^6.4.0",

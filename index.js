@@ -1,17 +1,56 @@
-const Post2Slack = require('post2slack');
+const Wreck = require('@hapi/wreck');
 const zlib = require('zlib');
 const pMap = require('p-map');
 
-let post = null;
+const slackPayload = function(obj) {
+  const attachment = {
+    fields: []
+  };
+  if (typeof obj.data === 'string') {
+    attachment.title = obj.data;
+  } else {
+    attachment.text = `\`\`\` ${JSON.stringify(obj.data, null, '  ')} \`\`\``;
+  }
+  delete obj.data;
+  if (obj.level === 'INFO') {
+    attachment.color = 'good';
+  }
+  if (obj.level === 'WARN') {
+    attachment.color = 'warning';
+  }
+  if (obj.level === 'ERROR') {
+    attachment.color = 'danger';
+  }
+  delete obj.level;
+  Object.keys(obj).forEach((key) => {
+    attachment.fields.push({
+      title: key,
+      value: obj[key]
+    });
+  });
+  // set any special channel:
+  const payload = {
+    attachments: [attachment]
+  };
+  if (process.env.SLACK_CHANNEL) {
+    payload.channel = process.env.SLACK_CHANNEL;
+  }
+  slackPayload.icon_emoji = process.env.SLACK_EMOJI || ':warning:';
+  slackPayload.username = process.env.SLACK_USERNAME || 'LambdaNotify';
+  return payload;
+};
+
+const postToSlack = async function(payload) {
+  const { res } = await Wreck.post(process.env.SLACK_HOOK, {
+    headers: { 'Content-type': 'application/json' },
+    payload: JSON.stringify(payload)
+  });
+  if (res.statusCode !== 200) {
+    throw new Error(`post to failed: ${res.statusCode} ${res.statusMessage}`);
+  }
+};
 
 exports.handler = async function(req) {
-  if (!post) {
-    post = new Post2Slack({
-      username: process.env.SLACK_USERNAME || 'LambdaNotify',
-      slackHook: process.env.SLACK_HOOK,
-      channel: process.env.SLACK_CHANNEL
-    });
-  }
   const debug = process.env.DEBUG === 'on';
 
   let event = {};
@@ -30,7 +69,29 @@ exports.handler = async function(req) {
   const group = event.logGroup;
   if (event.logEvents) {
     await pMap(event.logEvents, async (e) => {
-      await post.postFormatted([], { group, message: e.message, timestamp: e.timestamp });
+      const obj = {
+        group
+      };
+      if (e.message.indexOf('\t') !== -1) {
+        const [date, requestId, level, data] = e.message.split('\t');
+        obj.date = date;
+        obj.requestId = requestId;
+        obj.level = level;
+
+        if (data && data.startsWith('{')) {
+          obj.data = JSON.parse(data);
+        } else {
+          obj.data = data;
+        }
+      } else {
+        obj.level = 'INFO';
+        obj.data = e.message;
+      }
+
+      //console.log(JSON.stringify(obj, null, 2));
+      const payload = slackPayload(obj);
+      //console.log(JSON.stringify(payload, null, 2));
+      await postToSlack(payload);
     });
   }
 
