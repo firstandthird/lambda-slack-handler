@@ -35,8 +35,8 @@ const slackPayload = function(obj) {
   if (process.env.SLACK_CHANNEL) {
     payload.channel = process.env.SLACK_CHANNEL;
   }
-  slackPayload.icon_emoji = process.env.SLACK_EMOJI || ':warning:';
-  slackPayload.username = process.env.SLACK_USERNAME || 'LambdaNotify';
+  payload.icon_emoji = process.env.SLACK_EMOJI || ':warning:';
+  payload.username = process.env.SLACK_USERNAME || 'LambdaNotify';
   return payload;
 };
 
