@@ -106,11 +106,38 @@ const testMultiple = function() {
   return slack.handler(payload);
 };
 
+const keypress = async () => {
+  console.log('press a key to continue....');
+  process.stdin.setRawMode(true);
+  return new Promise(resolve => process.stdin.once('data', (data) => {
+    const byteArray = [...data];
+    if (byteArray.length > 0 && byteArray[0] === 3) {
+      console.log('^C');
+      process.exit(1);
+    }
+    process.stdin.setRawMode(false);
+    resolve();
+  }));
+};
+
 const run = async function() {
+  console.log('sending notice...');
   await testNotice();
+  await keypress();
+  console.log('sending error...');
   await testError();
+  await keypress();
+  console.log('sending timeout...');
   await testTimeout();
+  await keypress();
+  console.log('sending invoke error...');
   await testInvokeError();
+  await keypress();
+  console.log('sending multiple...');
   await testMultiple();
 };
-run();
+const runOne = async function() {
+  await testMultiple();
+};
+//run();
+runOne();

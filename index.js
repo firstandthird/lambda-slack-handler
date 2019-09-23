@@ -3,55 +3,95 @@ const zlib = require('zlib');
 const pMap = require('p-map');
 
 const slackPayload = function(obj) {
-  const attachment = {
-    fields: []
+  const payload = {
+    attachments: []
   };
+  const blocks = [];
+
+  //console.log(JSON.stringify(obj));
+
   if (typeof obj.data === 'string') {
-    attachment.title = obj.data;
+    blocks.push({
+      type: 'section',
+      text: {
+        type: 'plain_text',
+        text: obj.data
+      }
+    });
   } else {
-    attachment.text = `\`\`\` ${JSON.stringify(obj.data, null, '  ')} \`\`\``;
+    if (obj.data.level) {
+      obj.level = obj.data.level;
+      delete obj.data.level;
+    }
+    blocks.push({
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `\`\`\` ${JSON.stringify(obj.data, null, '  ')} \`\`\``
+      }
+    });
   }
   delete obj.data;
+
+  let color = '';
+  let emoji = '';
   if (obj.level === 'INFO') {
-    attachment.color = 'good';
+    color = '#d1ecf1';
+    emoji = ':eyes:';
   }
   if (obj.level === 'WARN') {
-    attachment.color = 'warning';
+    color = '#fff3cd';
+    emoji = ':warning:';
   }
   if (obj.level === 'ERROR') {
-    attachment.color = 'danger';
+    color = '#f8d7da';
+    emoji = ':fire:';
+  }
+  if (obj.group) {
+    payload.text = `*${emoji} ${obj.level}* - ${obj.group}`;
   }
   delete obj.level;
-  Object.keys(obj).forEach((key) => {
-    attachment.fields.push({
-      title: key,
-      value: obj[key]
+
+  const context = [];
+  if (obj.date) {
+    context.push({
+      type: 'plain_text',
+      text: obj.date
     });
-  });
-  // set any special channel:
-  const payload = {
-    attachments: [attachment]
-  };
-  if (process.env.SLACK_CHANNEL) {
-    payload.channel = process.env.SLACK_CHANNEL;
   }
-  payload.icon_emoji = process.env.SLACK_EMOJI || ':warning:';
-  payload.username = process.env.SLACK_USERNAME || 'LambdaNotify';
+  if (obj.requestId) {
+    context.push({
+      type: 'plain_text',
+      text: `RequestID: ${obj.requestId}`
+    });
+  }
+  if (context.length !== 0) {
+    blocks.push({
+      type: 'context',
+      elements: context
+    });
+  }
+  // set any special channel:
+  payload.attachments = [
+    { blocks, color },
+  ];
+  //console.log(JSON.stringify(payload, null, 2));
   return payload;
 };
 
-const postToSlack = async function(payload) {
-  const { res } = await Wreck.post(process.env.SLACK_HOOK, {
-    headers: { 'Content-type': 'application/json' },
-    payload: JSON.stringify(payload)
-  });
-  if (res.statusCode !== 200) {
-    throw new Error(`post to failed: ${res.statusCode} ${res.statusMessage}`);
+const postToSlack = async function(data) {
+  try {
+    await Wreck.post(process.env.SLACK_HOOK, {
+      headers: { 'Content-type': 'application/json' },
+      payload: JSON.stringify(data)
+    });
+  } catch (e) {
+    console.log(e, e.data.payload.toString());
   }
 };
 
 exports.handler = async function(req) {
-  const debug = process.env.DEBUG === 'on';
+  const debug = process.env.SLACK_DEBUG === 'on';
 
   let event = {};
   if (req.awslogs) {
@@ -84,7 +124,11 @@ exports.handler = async function(req) {
           obj.data = data;
         }
       } else {
-        obj.level = 'INFO';
+        if (e.message.indexOf('Task timed out after') !== -1) {
+          obj.level = 'ERROR';
+        } else {
+          obj.level = 'INFO';
+        }
         obj.data = e.message;
       }
 
