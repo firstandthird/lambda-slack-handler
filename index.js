@@ -8,8 +8,6 @@ const slackPayload = function(obj) {
   };
   const blocks = [];
 
-  //console.log(JSON.stringify(obj));
-
   if (typeof obj.data === 'string') {
     blocks.push({
       type: 'section',
@@ -75,19 +73,14 @@ const slackPayload = function(obj) {
   payload.attachments = [
     { blocks, color },
   ];
-  //console.log(JSON.stringify(payload, null, 2));
   return payload;
 };
 
 const postToSlack = async function(data) {
-  try {
-    await Wreck.post(process.env.SLACK_HOOK, {
-      headers: { 'Content-type': 'application/json' },
-      payload: JSON.stringify(data)
-    });
-  } catch (e) {
-    console.log(e, e.data.payload.toString());
-  }
+  await Wreck.post(process.env.SLACK_HOOK, {
+    headers: { 'Content-type': 'application/json' },
+    payload: JSON.stringify(data)
+  });
 };
 
 exports.handler = async function(req) {
@@ -132,10 +125,22 @@ exports.handler = async function(req) {
         obj.data = e.message;
       }
 
-      //console.log(JSON.stringify(obj, null, 2));
       const payload = slackPayload(obj);
-      //console.log(JSON.stringify(payload, null, 2));
-      await postToSlack(payload);
+      // if we can't report the log to slack,
+      // send another message to slack notifying of the failure:
+      try {
+        await postToSlack(payload);
+      } catch (e) {
+        await postToSlack(slackPayload({
+          data: {
+            message: 'lambda-slack-handler Unable to parse log payload',
+            data: payload,
+            level: 'ERROR',
+            tags: { error: true }
+          }
+        }));
+        console.log(e);
+      }
     });
   }
 
@@ -143,4 +148,3 @@ exports.handler = async function(req) {
     body: 'ok'
   };
 };
-

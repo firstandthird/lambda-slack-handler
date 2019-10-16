@@ -1,0 +1,3 @@
+npm install
+zip $VERSION.zip index.js package.json node_modules/ -r
+aws s3 cp $VERSION.zip s3://lambda-slack-handler/$VERSION.zip
