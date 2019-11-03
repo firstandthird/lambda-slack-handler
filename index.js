@@ -77,7 +77,7 @@ const slackPayload = function(obj) {
 };
 
 const postToSlack = async function(data) {
-  await Wreck.post(process.env.SLACK_HOOK, {
+  await Wreck.post(process.env.SLACK_HOOK || process.env.SLACK_WEBHOOK, {
     headers: { 'Content-type': 'application/json' },
     payload: JSON.stringify(data)
   });
