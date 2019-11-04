@@ -1,3 +1,4 @@
+rm -rf node_modules
 npm install -production
 VERSION=$1
 zip $VERSION.zip index.js package.json node_modules/ -r
