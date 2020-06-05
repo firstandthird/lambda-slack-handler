@@ -102,11 +102,19 @@ exports.handler = async function(req) {
   const group = event.logGroup;
   if (event.logEvents) {
     await pMap(event.logEvents, async (e) => {
+      /*
+      example event:
+      { id: '35489204208870452770407464646715531340858536503517773826',
+      timestamp: 1591390955456,
+      message:
+       '2020-06-05T21:02:35.456Z\td9ad50ef-d68c-454f-9ec7-d9d563b28b09\tERROR\t
+       Invoke Error \t{"errorType":"ReferenceError","errorMessage":"s is not defined","stack":["ReferenceError: s is not defined","    at /var/task/index.js:11:15","    at runHandler (/var/task/node_modules/@firstandthird/arc-rapptor/response.js:62:11)","    at async Runtime.handler (/var/task/node_modules/@firstandthird/arc-rapptor/response.js:103:17)"]}\n' } ] }
+      */
       const obj = {
         group
       };
-      if (e.message.indexOf('\t') !== -1) {
-        const [date, requestId, level, data] = e.message.split('\t');
+      if (e.message.includes('\t')) {
+        const [date, requestId, level, invokeError, data] = e.message.split('\t');
         obj.date = date;
         obj.requestId = requestId;
         obj.level = level;
@@ -115,6 +123,9 @@ exports.handler = async function(req) {
           obj.data = JSON.parse(data);
         } else {
           obj.data = data;
+        }
+        if (obj.data.stack && obj.data.stack.join) {
+          obj.data.stack = obj.data.stack.join('\n');
         }
       } else {
         if (e.message.indexOf('Task timed out after') !== -1) {
